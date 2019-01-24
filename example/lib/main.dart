@@ -104,19 +104,17 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _pickImage(ImageSource type) async {
-    double width = MediaQuery.of(context).size.width*MediaQuery.of(context).devicePixelRatio;
-
-    var widthStr = "$width".split(".").elementAt(0);
-    print(widthStr);
     File imageFile = await ImagePicker.pickImage(source: type);
     setState(() {
       primaryFile = imageFile;
     });
     if (imageFile == null) return;
     final tempDir = await getTemporaryDirectory();
-    var rand = "${DateTime.now()}";
-    CompressObject compressObject =
-        CompressObject(imageFile, tempDir.path, rand, int.parse(widthStr));
+
+    CompressObject compressObject = CompressObject(
+      imageFile,//image
+      tempDir.path,//compress to path
+    );
     Luban.compressImage(compressObject).then((_path) {
       setState(() {
         compressedFile = File(_path);

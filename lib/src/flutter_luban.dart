@@ -26,7 +26,7 @@ class Luban {
     double thumbH = (fixelH % 2 == 1 ? fixelH + 1 : fixelH).toDouble();
 
     double scale = fixelW / fixelH;
-    var decodedImageFile = new File(object.path + '/img_${object.rand}.jpg');
+    var decodedImageFile = new File(object.path + '/img_${DateTime.now().millisecondsSinceEpoch}.jpg');
 
     if (scale <= 1 && scale > 0.5625) {
       if (fixelH < 1664) {
@@ -98,8 +98,6 @@ class Luban {
 class CompressObject {
   File imageFile;
   String path;
-  String rand;
-  int compressWidth;
 
-  CompressObject(this.imageFile, this.path, this.rand, this.compressWidth);
+  CompressObject(this.imageFile, this.path);
 }
