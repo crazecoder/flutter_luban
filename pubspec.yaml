@@ -2,7 +2,7 @@ name: flutter_luban
 description: A image compress package like Luban for dart.
 version: 0.1.1
 author: crazecoder <21527312@qq.com>
-homepage: https://github.com/crazecoder/flutter_bugly
+homepage: https://github.com/crazecoder/flutter_luban
 
 
 environment:
