@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart';
@@ -95,22 +96,22 @@ class Luban {
     }else{
       smallerImage = copyResize(image, thumbW.toInt(), thumbH.toInt());
     }
-
+    if (decodedImageFile.existsSync()) {
+      decodedImageFile.deleteSync();
+    }
     _compressImage(smallerImage, decodedImageFile, 6, size);
     return decodedImageFile.path;
   }
 
   static _compressImage(Image image, File file, quality, targetSize) {
-    if (file.existsSync()) {
-      file.deleteSync();
-    }
     var im = encodeJpg(image, quality: quality);
-    file.writeAsBytesSync(im);
-    var decodedImageFileSize = file.lengthSync();
-    if (decodedImageFileSize / 1024 < targetSize && quality <= 100) {
+    var tempImageSize = Uint8List.fromList(im).lengthInBytes;
+    if (tempImageSize / 1024 < targetSize && quality <= 100) {
       quality += 6;
       _compressImage(image, file, quality, targetSize);
+      return;
     }
+    file.writeAsBytesSync(im);
   }
 }
 
