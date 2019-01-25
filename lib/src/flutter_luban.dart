@@ -18,6 +18,7 @@ class Luban {
   static String _lubanCompress(CompressObject object) {
     Image image = decodeImage(object.imageFile.readAsBytesSync());
     var length = object.imageFile.lengthSync();
+    bool isLandscape = false;
 
     double size;
     int fixelW = image.width;
@@ -27,6 +28,11 @@ class Luban {
     double scale = 0;
     if (fixelW > fixelH) {
       scale = fixelH / fixelW;
+      var tempFixelH = fixelW;
+      var tempFixelW = fixelH;
+      fixelH = tempFixelH;
+      fixelW = tempFixelW;
+      isLandscape = true;
     } else {
       scale = fixelW / fixelH;
     }
@@ -60,7 +66,7 @@ class Luban {
         size = (thumbW * thumbH) / pow(2560, 2) * 300;
         size = size < 100 ? 100 : size;
       }
-    } else if (scale <= 0.5625 && scale > 0.5) {
+    } else if (scale <= 0.5625 && scale >= 0.5) {
       if (fixelH < 1280 && length / 1024 < 200) {
         decodedImageFile
             .writeAsBytesSync(encodeJpg(image, quality: _DEFAULT_QUALITY));
@@ -69,7 +75,7 @@ class Luban {
       int multiple = fixelH / 1280 == 0 ? 1 : (fixelH / 1280).toInt();
       thumbW = fixelW / multiple;
       thumbH = fixelH / multiple;
-      size = (thumbW * thumbH) / (1440.0 * 2560.0) * 400;
+      size = (thumbW * thumbH) / (1440.0 * 2560.0) * 200;
       size = size < 100 ? 100 : size;
     } else {
       int multiple = (fixelH / (1280.0 / scale)).ceil();
@@ -83,7 +89,13 @@ class Luban {
           .writeAsBytesSync(encodeJpg(image, quality: _DEFAULT_QUALITY));
       return decodedImageFile.path;
     }
-    Image smallerImage = copyResize(image, thumbW.toInt(), thumbH.toInt());
+    Image smallerImage;
+    if(isLandscape){
+      smallerImage = copyResize(image, thumbH.toInt(), thumbW.toInt());
+    }else{
+      smallerImage = copyResize(image, thumbW.toInt(), thumbH.toInt());
+    }
+
     _compressImage(smallerImage, decodedImageFile, 6, size);
     return decodedImageFile.path;
   }
@@ -95,7 +107,6 @@ class Luban {
     var im = encodeJpg(image, quality: quality);
     file.writeAsBytesSync(im);
     var decodedImageFileSize = file.lengthSync();
-    print(decodedImageFileSize / 1024);
     if (decodedImageFileSize / 1024 < targetSize && quality <= 100) {
       quality += 6;
       _compressImage(image, file, quality, targetSize);
