@@ -1,4 +1,5 @@
 # flutter_luban
+[![pub package](https://img.shields.io/pub/v/flutter_luban.svg)](https://pub.dartlang.org/packages/flutter_luban)
 
 A image compress package like [Luban](https://github.com/Curzibn/Luban) for dart.
 
