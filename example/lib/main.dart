@@ -35,6 +35,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   File primaryFile;
   File compressedFile;
+  var time_start = 0;
+  var time = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -43,11 +45,17 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: Row(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            _buildImage(primaryFile, "primary"),
-            _buildImage(compressedFile, "compressed"),
+            Text("$time"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                _buildImage(primaryFile, "primary"),
+                _buildImage(compressedFile, "compressed"),
+              ],
+            )
           ],
         ),
       ),
@@ -107,17 +115,20 @@ class _MyHomePageState extends State<MyHomePage> {
     File imageFile = await ImagePicker.pickImage(source: type);
     setState(() {
       primaryFile = imageFile;
+      time_start = DateTime.now().millisecondsSinceEpoch;
     });
     if (imageFile == null) return;
     final tempDir = await getTemporaryDirectory();
 
     CompressObject compressObject = CompressObject(
-      imageFile,//image
-      tempDir.path,//compress to path
+      imageFile:imageFile, //image
+      path:tempDir.path, //compress to path
+      mode: CompressMode.LARGE2SMALL,
     );
     Luban.compressImage(compressObject).then((_path) {
       setState(() {
         compressedFile = File(_path);
+        time = DateTime.now().millisecondsSinceEpoch - time_start;
       });
     });
   }

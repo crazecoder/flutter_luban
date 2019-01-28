@@ -39,7 +39,9 @@ class Luban {
     }
 
     var decodedImageFile = new File(
-        object.path + '/img_${DateTime.now().millisecondsSinceEpoch}.jpg');
+        object.path + '/img_${DateTime
+            .now()
+            .millisecondsSinceEpoch}.jpg');
 
     if (scale <= 1 && scale > 0.5625) {
       if (fixelH < 1664) {
@@ -91,33 +93,61 @@ class Luban {
       return decodedImageFile.path;
     }
     Image smallerImage;
-    if(isLandscape){
+    if (isLandscape) {
       smallerImage = copyResize(image, thumbH.toInt(), thumbW.toInt());
-    }else{
+    } else {
       smallerImage = copyResize(image, thumbW.toInt(), thumbH.toInt());
     }
     if (decodedImageFile.existsSync()) {
       decodedImageFile.deleteSync();
     }
-    _compressImage(smallerImage, decodedImageFile, 6, size);
+    if (object.mode==CompressMode.LARGE2SMALL){
+      _large2SmallCompressImage(smallerImage, decodedImageFile, _DEFAULT_QUALITY, size);
+    }else{
+      _small2LargeCompressImage(smallerImage, decodedImageFile, 6, size);
+    }
     return decodedImageFile.path;
   }
 
-  static _compressImage(Image image, File file, quality, targetSize) {
+  static _large2SmallCompressImage(Image image, File file, quality,
+      targetSize) {
     var im = encodeJpg(image, quality: quality);
-    var tempImageSize = Uint8List.fromList(im).lengthInBytes;
+    var tempImageSize = Uint8List
+        .fromList(im)
+        .lengthInBytes;
+    if (tempImageSize / 1024 > targetSize && quality > 6) {
+      quality -= 6;
+      _large2SmallCompressImage(image, file, quality, targetSize);
+      return;
+    }
+    file.writeAsBytesSync(im);
+  }
+
+  static _small2LargeCompressImage(Image image, File file, quality,
+      targetSize) {
+    var im = encodeJpg(image, quality: quality);
+    var tempImageSize = Uint8List
+        .fromList(im)
+        .lengthInBytes;
     if (tempImageSize / 1024 < targetSize && quality <= 100) {
       quality += 6;
-      _compressImage(image, file, quality, targetSize);
+      _small2LargeCompressImage(image, file, quality, targetSize);
       return;
     }
     file.writeAsBytesSync(im);
   }
 }
 
+enum CompressMode {
+  SMALL2LARGE,
+  LARGE2SMALL,
+}
+
 class CompressObject {
   File imageFile;
   String path;
+  CompressMode mode;
 
-  CompressObject(this.imageFile, this.path);
+  CompressObject(
+      {this.imageFile, this.path, this.mode: CompressMode.SMALL2LARGE});
 }
