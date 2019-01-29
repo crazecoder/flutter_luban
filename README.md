@@ -8,7 +8,7 @@ A image compress package like [Luban](https://github.com/Curzibn/Luban) for dart
     CompressObject compressObject = CompressObject(
         imageFile:imageFile, //image
         path:tempDir.path, //compress to path
-        mode: CompressMode.LARGE2SMALL,//default SMALL2LARGE
+        mode: CompressMode.LARGE2SMALL,//default AUTO
       );
     Luban.compressImage(compressObject).then((_path) {
         setState(() {

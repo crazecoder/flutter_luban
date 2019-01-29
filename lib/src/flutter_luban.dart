@@ -39,13 +39,12 @@ class Luban {
     }
 
     var decodedImageFile = new File(
-        object.path + '/img_${DateTime
-            .now()
-            .millisecondsSinceEpoch}.jpg');
+        object.path + '/img_${DateTime.now().millisecondsSinceEpoch}.jpg');
 
+    var imageSize = length / 1024;
     if (scale <= 1 && scale > 0.5625) {
       if (fixelH < 1664) {
-        if (length / 1024.0 < 150) {
+        if (imageSize < 150) {
           decodedImageFile
               .writeAsBytesSync(encodeJpg(image, quality: _DEFAULT_QUALITY));
           return decodedImageFile.path;
@@ -70,7 +69,7 @@ class Luban {
         size = size < 100 ? 100 : size;
       }
     } else if (scale <= 0.5625 && scale >= 0.5) {
-      if (fixelH < 1280 && length / 1024 < 200) {
+      if (fixelH < 1280 && imageSize < 200) {
         decodedImageFile
             .writeAsBytesSync(encodeJpg(image, quality: _DEFAULT_QUALITY));
         return decodedImageFile.path;
@@ -87,7 +86,7 @@ class Luban {
       size = ((thumbW * thumbH) / (1280.0 * (1280 / scale))) * 500;
       size = size < 100 ? 100 : size;
     }
-    if (length / 1024 < size) {
+    if (imageSize < size) {
       decodedImageFile
           .writeAsBytesSync(encodeJpg(image, quality: _DEFAULT_QUALITY));
       return decodedImageFile.path;
@@ -101,20 +100,26 @@ class Luban {
     if (decodedImageFile.existsSync()) {
       decodedImageFile.deleteSync();
     }
-    if (object.mode==CompressMode.LARGE2SMALL){
-      _large2SmallCompressImage(smallerImage, decodedImageFile, _DEFAULT_QUALITY, size);
-    }else{
+    if (object.mode == CompressMode.LARGE2SMALL) {
+      _large2SmallCompressImage(
+          smallerImage, decodedImageFile, _DEFAULT_QUALITY, size);
+    } else if (object.mode == CompressMode.SMALL2LARGE) {
       _small2LargeCompressImage(smallerImage, decodedImageFile, 6, size);
+    } else {
+      if (imageSize < 500) {
+        _large2SmallCompressImage(
+            smallerImage, decodedImageFile, _DEFAULT_QUALITY, size);
+      } else {
+        _small2LargeCompressImage(smallerImage, decodedImageFile, 6, size);
+      }
     }
     return decodedImageFile.path;
   }
 
-  static _large2SmallCompressImage(Image image, File file, quality,
-      targetSize) {
+  static _large2SmallCompressImage(
+      Image image, File file, quality, targetSize) {
     var im = encodeJpg(image, quality: quality);
-    var tempImageSize = Uint8List
-        .fromList(im)
-        .lengthInBytes;
+    var tempImageSize = Uint8List.fromList(im).lengthInBytes;
     if (tempImageSize / 1024 > targetSize && quality > 6) {
       quality -= 6;
       _large2SmallCompressImage(image, file, quality, targetSize);
@@ -123,12 +128,10 @@ class Luban {
     file.writeAsBytesSync(im);
   }
 
-  static _small2LargeCompressImage(Image image, File file, quality,
-      targetSize) {
+  static _small2LargeCompressImage(
+      Image image, File file, quality, targetSize) {
     var im = encodeJpg(image, quality: quality);
-    var tempImageSize = Uint8List
-        .fromList(im)
-        .lengthInBytes;
+    var tempImageSize = Uint8List.fromList(im).lengthInBytes;
     if (tempImageSize / 1024 < targetSize && quality <= 100) {
       quality += 6;
       _small2LargeCompressImage(image, file, quality, targetSize);
@@ -141,6 +144,7 @@ class Luban {
 enum CompressMode {
   SMALL2LARGE,
   LARGE2SMALL,
+  AUTO,
 }
 
 class CompressObject {
@@ -148,6 +152,5 @@ class CompressObject {
   String path;
   CompressMode mode;
 
-  CompressObject(
-      {this.imageFile, this.path, this.mode: CompressMode.SMALL2LARGE});
+  CompressObject({this.imageFile, this.path, this.mode: CompressMode.AUTO});
 }
