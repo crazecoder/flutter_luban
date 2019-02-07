@@ -10,8 +10,6 @@ import 'dart:math';
 class Luban {
   Luban._();
 
-  static const _DEFAULT_QUALITY = 80;
-
   static Future<String> compressImage(CompressObject object) async {
     return compute(_lubanCompress, object);
   }
@@ -41,12 +39,15 @@ class Luban {
     var decodedImageFile = new File(
         object.path + '/img_${DateTime.now().millisecondsSinceEpoch}.jpg');
 
+    if (decodedImageFile.existsSync()) {
+      decodedImageFile.deleteSync();
+    }
     var imageSize = length / 1024;
     if (scale <= 1 && scale > 0.5625) {
       if (fixelH < 1664) {
         if (imageSize < 150) {
           decodedImageFile
-              .writeAsBytesSync(encodeJpg(image, quality: _DEFAULT_QUALITY));
+              .writeAsBytesSync(encodeJpg(image, quality: object.quality));
           return decodedImageFile.path;
         }
         size = (fixelW * fixelH) / pow(1664, 2) * 150;
@@ -71,7 +72,7 @@ class Luban {
     } else if (scale <= 0.5625 && scale >= 0.5) {
       if (fixelH < 1280 && imageSize < 200) {
         decodedImageFile
-            .writeAsBytesSync(encodeJpg(image, quality: _DEFAULT_QUALITY));
+            .writeAsBytesSync(encodeJpg(image, quality: object.quality));
         return decodedImageFile.path;
       }
       int multiple = fixelH / 1280 == 0 ? 1 : (fixelH / 1280).toInt();
@@ -88,7 +89,7 @@ class Luban {
     }
     if (imageSize < size) {
       decodedImageFile
-          .writeAsBytesSync(encodeJpg(image, quality: _DEFAULT_QUALITY));
+          .writeAsBytesSync(encodeJpg(image, quality: object.quality));
       return decodedImageFile.path;
     }
     Image smallerImage;
@@ -102,39 +103,41 @@ class Luban {
     }
     if (object.mode == CompressMode.LARGE2SMALL) {
       _large2SmallCompressImage(
-          smallerImage, decodedImageFile, _DEFAULT_QUALITY, size);
+          smallerImage, decodedImageFile, object.quality, size, object.step);
     } else if (object.mode == CompressMode.SMALL2LARGE) {
-      _small2LargeCompressImage(smallerImage, decodedImageFile, 6, size);
+      _small2LargeCompressImage(
+          smallerImage, decodedImageFile, object.step, size, object.step);
     } else {
       if (imageSize < 500) {
-        _large2SmallCompressImage(
-            smallerImage, decodedImageFile, _DEFAULT_QUALITY, size);
+        _large2SmallCompressImage(smallerImage, decodedImageFile,
+            object.quality, size, object.step);
       } else {
-        _small2LargeCompressImage(smallerImage, decodedImageFile, 6, size);
+        _small2LargeCompressImage(
+            smallerImage, decodedImageFile, object.step, size, object.step);
       }
     }
     return decodedImageFile.path;
   }
 
   static _large2SmallCompressImage(
-      Image image, File file, quality, targetSize) {
+      Image image, File file, quality, targetSize, step) {
     var im = encodeJpg(image, quality: quality);
     var tempImageSize = Uint8List.fromList(im).lengthInBytes;
-    if (tempImageSize / 1024 > targetSize && quality > 6) {
-      quality -= 6;
-      _large2SmallCompressImage(image, file, quality, targetSize);
+    if (tempImageSize / 1024 > targetSize && quality > step) {
+      quality -= step;
+      _large2SmallCompressImage(image, file, quality, targetSize, step);
       return;
     }
     file.writeAsBytesSync(im);
   }
 
   static _small2LargeCompressImage(
-      Image image, File file, quality, targetSize) {
+      Image image, File file, quality, targetSize, step) {
     var im = encodeJpg(image, quality: quality);
     var tempImageSize = Uint8List.fromList(im).lengthInBytes;
     if (tempImageSize / 1024 < targetSize && quality <= 100) {
-      quality += 6;
-      _small2LargeCompressImage(image, file, quality, targetSize);
+      quality += step;
+      _small2LargeCompressImage(image, file, quality, targetSize, step);
       return;
     }
     file.writeAsBytesSync(im);
@@ -151,6 +154,9 @@ class CompressObject {
   File imageFile;
   String path;
   CompressMode mode;
+  int quality;
+  int step;
 
-  CompressObject({this.imageFile, this.path, this.mode: CompressMode.AUTO});
+  CompressObject(
+      {this.imageFile, this.path, this.mode: CompressMode.AUTO, this.quality: 80, this.step: 6});
 }

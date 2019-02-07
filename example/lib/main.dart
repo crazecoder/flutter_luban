@@ -123,7 +123,9 @@ class _MyHomePageState extends State<MyHomePage> {
     CompressObject compressObject = CompressObject(
       imageFile:imageFile, //image
       path:tempDir.path, //compress to path
-      mode: CompressMode.LARGE2SMALL,
+      quality: 85,//first compress quality, default 80
+      step: 9,//compress quality step, The bigger the fast, Smaller is more accurate, default 6
+      mode: CompressMode.LARGE2SMALL,//default AUTO
     );
     Luban.compressImage(compressObject).then((_path) {
       setState(() {
