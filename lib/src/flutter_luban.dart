@@ -17,7 +17,13 @@ class Luban {
   static String _lubanCompress(CompressObject object) {
     Image image = decodeImage(object.imageFile.readAsBytesSync());
     var length = object.imageFile.lengthSync();
+    print(object.imageFile.path);
     bool isLandscape = false;
+    bool isJpg = object.imageFile.path.endsWith("jpg") ||
+        object.imageFile.path.endsWith("jpeg");
+    bool isPng = false;
+
+    if (!isJpg) isPng = object.imageFile.path.endsWith("png");
 
     double size;
     int fixelW = image.width;
@@ -35,9 +41,15 @@ class Luban {
     } else {
       scale = fixelW / fixelH;
     }
-
-    var decodedImageFile = new File(
-        object.path + '/img_${DateTime.now().millisecondsSinceEpoch}.jpg');
+    var decodedImageFile;
+    if (isJpg)
+      decodedImageFile = new File(
+          object.path + '/img_${DateTime.now().millisecondsSinceEpoch}.jpg');
+    else if (isPng)
+      decodedImageFile = new File(
+          object.path + '/img_${DateTime.now().millisecondsSinceEpoch}.png');
+    else
+      throw Exception("flutter_luban don't support this image type");
 
     if (decodedImageFile.existsSync()) {
       decodedImageFile.deleteSync();
@@ -103,41 +115,159 @@ class Luban {
     }
     if (object.mode == CompressMode.LARGE2SMALL) {
       _large2SmallCompressImage(
-          smallerImage, decodedImageFile, object.quality, size, object.step);
+        image: smallerImage,
+        file: decodedImageFile,
+        quality: object.quality,
+        targetSize: size,
+        step: object.step,
+        isJpg: isJpg,
+      );
     } else if (object.mode == CompressMode.SMALL2LARGE) {
       _small2LargeCompressImage(
-          smallerImage, decodedImageFile, object.step, size, object.step);
+        image: smallerImage,
+        file: decodedImageFile,
+        quality: object.step,
+        targetSize: size,
+        step: object.step,
+        isJpg: isJpg,
+      );
     } else {
       if (imageSize < 500) {
-        _large2SmallCompressImage(smallerImage, decodedImageFile,
-            object.quality, size, object.step);
+        _large2SmallCompressImage(
+          image: smallerImage,
+          file: decodedImageFile,
+          quality: object.quality,
+          targetSize: size,
+          step: object.step,
+          isJpg: isJpg,
+        );
       } else {
         _small2LargeCompressImage(
-            smallerImage, decodedImageFile, object.step, size, object.step);
+          image: smallerImage,
+          file: decodedImageFile,
+          quality: object.step,
+          targetSize: size,
+          step: object.step,
+          isJpg: isJpg,
+        );
       }
     }
     return decodedImageFile.path;
   }
 
-  static _large2SmallCompressImage(
-      Image image, File file, quality, targetSize, step) {
-    var im = encodeJpg(image, quality: quality);
+  static _large2SmallCompressImage({
+    Image image,
+    File file,
+    quality,
+    targetSize,
+    step,
+    bool isJpg: true,
+  }) {
+    double d = quality / 10;
+    var level = d.toInt();
+    var im;
+    if (isJpg)
+      im = encodeJpg(image, quality: quality);
+    else
+      im = encodePng(image, level: level);
     var tempImageSize = Uint8List.fromList(im).lengthInBytes;
     if (tempImageSize / 1024 > targetSize && quality > step) {
       quality -= step;
-      _large2SmallCompressImage(image, file, quality, targetSize, step);
+      _large2SmallCompressImage(
+        image: image,
+        file: file,
+        quality: quality,
+        targetSize: targetSize,
+        step: step,
+      );
       return;
     }
     file.writeAsBytesSync(im);
   }
 
-  static _small2LargeCompressImage(
-      Image image, File file, quality, targetSize, step) {
+  static _small2LargeCompressImage({
+    Image image,
+    File file,
+    quality,
+    targetSize,
+    step,
+    bool isJpg: true,
+  }) {
+//    double d = quality / 10;
+//    var level = d.toInt();
+//    var im;
+//    if (isJpg)
+//      im = encodeJpg(image, quality: quality);
+//    else
+//      im = encodePng(image, level: level);
+//    var tempImageSize = Uint8List.fromList(im).lengthInBytes;
+//    if (tempImageSize / 1024 < targetSize && quality <= 100) {
+//      quality += step;
+//      _small2LargeCompressImage(
+//        image: image,
+//        file: file,
+//        quality: quality,
+//        targetSize: targetSize,
+//        step: step,
+//        isJpg: isJpg,
+//      );
+//      return;
+//    }
+//    file.writeAsBytesSync(im);
+    isJpg
+        ? _compressJpg(
+            image: image,
+            file: file,
+            quality: quality,
+            targetSize: targetSize,
+            step: step,
+          )
+        : _compressPng(
+            image: image,
+            file: file,
+            targetSize: targetSize,
+          );
+  }
+
+  static void _compressJpg({
+    Image image,
+    File file,
+    quality,
+    targetSize,
+    step,
+  }) {
     var im = encodeJpg(image, quality: quality);
     var tempImageSize = Uint8List.fromList(im).lengthInBytes;
     if (tempImageSize / 1024 < targetSize && quality <= 100) {
       quality += step;
-      _small2LargeCompressImage(image, file, quality, targetSize, step);
+      _small2LargeCompressImage(
+        image: image,
+        file: file,
+        quality: quality,
+        targetSize: targetSize,
+        step: step,
+        isJpg: true,
+      );
+      return;
+    }
+    file.writeAsBytesSync(im);
+  }
+
+  static void _compressPng({
+    Image image,
+    File file,
+    level: 9,
+    targetSize,
+  }) {
+    var im = encodePng(image, level: level);
+    var tempImageSize = Uint8List.fromList(im).lengthInBytes;
+    if (tempImageSize / 1024 < targetSize) {
+      _small2LargeCompressImage(
+        image: image,
+        file: file,
+        targetSize: targetSize,
+        isJpg: false,
+      );
       return;
     }
     file.writeAsBytesSync(im);
@@ -158,5 +288,9 @@ class CompressObject {
   int step;
 
   CompressObject(
-      {this.imageFile, this.path, this.mode: CompressMode.AUTO, this.quality: 80, this.step: 6});
+      {this.imageFile,
+      this.path,
+      this.mode: CompressMode.AUTO,
+      this.quality: 80,
+      this.step: 6});
 }
