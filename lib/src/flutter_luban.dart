@@ -163,26 +163,28 @@ class Luban {
     step,
     bool isJpg: true,
   }) {
-    double d = quality / 10;
-    var level = d.toInt();
-    var im;
-    if (isJpg)
-      im = encodeJpg(image, quality: quality);
-    else
-      im = encodePng(image, level: level);
-    var tempImageSize = Uint8List.fromList(im).lengthInBytes;
-    if (tempImageSize / 1024 > targetSize && quality > step) {
-      quality -= step;
-      _large2SmallCompressImage(
+    if(isJpg){
+      var im = encodeJpg(image, quality: quality);
+      var tempImageSize = Uint8List.fromList(im).lengthInBytes;
+      if (tempImageSize / 1024 > targetSize && quality > step) {
+        quality -= step;
+        _large2SmallCompressImage(
+          image: image,
+          file: file,
+          quality: quality,
+          targetSize: targetSize,
+          step: step,
+        );
+        return;
+      }
+      file.writeAsBytesSync(im);
+    }else{
+      _compressPng(
         image: image,
         file: file,
-        quality: quality,
         targetSize: targetSize,
-        step: step,
       );
-      return;
     }
-    file.writeAsBytesSync(im);
   }
 
   static _small2LargeCompressImage({
@@ -193,64 +195,29 @@ class Luban {
     step,
     bool isJpg: true,
   }) {
-//    double d = quality / 10;
-//    var level = d.toInt();
-//    var im;
-//    if (isJpg)
-//      im = encodeJpg(image, quality: quality);
-//    else
-//      im = encodePng(image, level: level);
-//    var tempImageSize = Uint8List.fromList(im).lengthInBytes;
-//    if (tempImageSize / 1024 < targetSize && quality <= 100) {
-//      quality += step;
-//      _small2LargeCompressImage(
-//        image: image,
-//        file: file,
-//        quality: quality,
-//        targetSize: targetSize,
-//        step: step,
-//        isJpg: isJpg,
-//      );
-//      return;
-//    }
-//    file.writeAsBytesSync(im);
-    isJpg
-        ? _compressJpg(
-            image: image,
-            file: file,
-            quality: quality,
-            targetSize: targetSize,
-            step: step,
-          )
-        : _compressPng(
-            image: image,
-            file: file,
-            targetSize: targetSize,
-          );
-  }
-
-  static void _compressJpg({
-    Image image,
-    File file,
-    quality,
-    targetSize,
-    step,
-  }) {
-    var im = encodeJpg(image, quality: quality);
-    var tempImageSize = Uint8List.fromList(im).lengthInBytes;
-    if (tempImageSize / 1024 < targetSize && quality <= 100) {
-      quality += step;
-      _small2LargeCompressImage(
+    if (isJpg){
+      var im = encodeJpg(image, quality: quality);
+      var tempImageSize = Uint8List.fromList(im).lengthInBytes;
+      if (tempImageSize / 1024 < targetSize && quality <= 100) {
+        quality += step;
+        _small2LargeCompressImage(
+          image: image,
+          file: file,
+          quality: quality,
+          targetSize: targetSize,
+          step: step,
+          isJpg: isJpg,
+        );
+        return;
+      }
+      file.writeAsBytesSync(im);
+    }else{
+      _compressPng(
         image: image,
         file: file,
-        quality: quality,
         targetSize: targetSize,
-        step: step,
-        isJpg: true,
       );
-      return;
     }
-    file.writeAsBytesSync(im);
   }
 
   static void _compressPng({
