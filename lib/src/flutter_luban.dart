@@ -75,7 +75,7 @@ class Luban {
         size = (thumbW * thumbH) / pow(2560, 2) * 300;
         size = size < 100 ? 100 : size;
       } else {
-        int multiple = fixelH / 1280 == 0 ? 1 : (fixelH / 1280).toInt();
+        int multiple = fixelH / 1280 == 0 ? 1 : fixelH ~/ 1280;
         thumbW = fixelW / multiple;
         thumbH = fixelH / multiple;
         size = (thumbW * thumbH) / pow(2560, 2) * 300;
@@ -87,7 +87,7 @@ class Luban {
             .writeAsBytesSync(encodeJpg(image, quality: object.quality));
         return decodedImageFile.path;
       }
-      int multiple = fixelH / 1280 == 0 ? 1 : (fixelH / 1280).toInt();
+      int multiple = fixelH / 1280 == 0 ? 1 : fixelH ~/ 1280;
       thumbW = fixelW / multiple;
       thumbH = fixelH / multiple;
       size = (thumbW * thumbH) / (1440.0 * 2560.0) * 200;
@@ -106,9 +106,9 @@ class Luban {
     }
     Image smallerImage;
     if (isLandscape) {
-      smallerImage = copyResize(image, thumbH.toInt(), thumbW.toInt());
+      smallerImage = copyResize(image, width:thumbH.toInt(), height:thumbW.toInt());
     } else {
-      smallerImage = copyResize(image, thumbW.toInt(), thumbH.toInt());
+      smallerImage = copyResize(image, width:thumbW.toInt(), height:thumbH.toInt());
     }
     if (decodedImageFile.existsSync()) {
       decodedImageFile.deleteSync();

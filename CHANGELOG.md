@@ -1,3 +1,15 @@
-## [0.0.1] - TODO: Add release date.
-
-* TODO: Describe initial release.
+## 0.1.7
+* upgrade image: ^2.1.0
+## 0.1.6+1
+* add png support, but just beta
+## 0.1.5
+* add custom params
+* upgrade image 2.0.7
+## 0.1.4
+* add auto mode
+## 0.1.3
+* add compress mode
+## 0.1.2
+* Optimization algorithm
+## 0.1.1
+* Initial commit
