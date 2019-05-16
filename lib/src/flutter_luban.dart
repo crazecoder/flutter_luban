@@ -106,9 +106,9 @@ class Luban {
     }
     Image smallerImage;
     if (isLandscape) {
-      smallerImage = copyResize(image, thumbH.toInt(), thumbW.toInt());
+      smallerImage = copyResize(image, height:thumbH.toInt(), width:thumbW.toInt());
     } else {
-      smallerImage = copyResize(image, thumbW.toInt(), thumbH.toInt());
+      smallerImage = copyResize(image, width:thumbW.toInt(), height:thumbH.toInt());
     }
     if (decodedImageFile.existsSync()) {
       decodedImageFile.deleteSync();
