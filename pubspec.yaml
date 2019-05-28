@@ -1,6 +1,6 @@
 name: flutter_luban
 description: A image compress package like Luban for dart.
-version: 0.1.7
+version: 0.1.7+1
 author: crazecoder <21527312@qq.com>
 homepage: https://github.com/crazecoder/flutter_luban
 
@@ -11,7 +11,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  image: ^2.1.0
+  image: ^2.1.3
 
 dev_dependencies:
   flutter_test:
