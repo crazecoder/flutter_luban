@@ -145,7 +145,7 @@ class Luban {
         _small2LargeCompressImage(
           image: smallerImage,
           file: decodedImageFile,
-          quality: object.step,
+          quality: object.quality,
           targetSize: size,
           step: object.step,
           isJpg: isJpg,
