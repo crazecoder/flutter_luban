@@ -14,6 +14,18 @@ class Luban {
     return compute(_lubanCompress, object);
   }
 
+  static Future<List<String>> compressImageList(List<CompressObject> objects) async {
+    return compute(_lubanCompressList, objects);
+  }
+
+  static List<String> _lubanCompressList(List<CompressObject> objects){
+    var results = [];
+    objects.forEach((_o){
+      results.add(_lubanCompress(_o));
+    });
+    return results;
+  }
+
   static String _lubanCompress(CompressObject object) {
     Image image = decodeImage(object.imageFile.readAsBytesSync());
     var length = object.imageFile.lengthSync();
