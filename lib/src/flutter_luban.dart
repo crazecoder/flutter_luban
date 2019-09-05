@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'dart:async';
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
@@ -14,10 +15,27 @@ class Luban {
     return compute(_lubanCompress, object);
   }
 
+  static Future<String> compressImageQueue(CompressObject object) async {
+    final response = ReceivePort();
+    await Isolate.spawn(_lubanCompressQueue, response.sendPort);
+    final sendPort = await response.first;
+    final answer = ReceivePort();
+    sendPort.send([answer.sendPort, object]);
+    return answer.first;
+  }
+
   static Future<List<String>> compressImageList(List<CompressObject> objects) async {
     return compute(_lubanCompressList, objects);
   }
-
+  static void _lubanCompressQueue(SendPort port){
+    final rPort = ReceivePort();
+    port.send(rPort.sendPort);
+    rPort.listen((message) {
+      final send = message[0] as SendPort;
+      final object = message[1] as CompressObject;
+      send.send(_lubanCompress(object));
+    });
+  }
   static List<String> _lubanCompressList(List<CompressObject> objects){
     var results = [];
     objects.forEach((_o){
