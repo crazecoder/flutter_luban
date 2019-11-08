@@ -1,3 +1,7 @@
+## 0.1.8
+* upgrade image: ^2.1.8
+* add compressImageQueue
+* add compressImageList
 ## 0.1.7+1
 * upgrade image: ^2.1.3
 ## 0.1.7
