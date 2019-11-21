@@ -1,3 +1,5 @@
+## 0.1.9
+* upgrade image: ^2.1.9 (Optimize jpegDecode)
 ## 0.1.8
 * upgrade image: ^2.1.8
 * add compressImageQueue
