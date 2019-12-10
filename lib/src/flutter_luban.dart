@@ -15,7 +15,7 @@ class Luban {
     return compute(_lubanCompress, object);
   }
 
-  static Future<String> compressImageQueue(CompressObject object) async {
+  static Future<dynamic> compressImageQueue(CompressObject object) async {
     final response = ReceivePort();
     await Isolate.spawn(_lubanCompressQueue, response.sendPort);
     final sendPort = await response.first;
@@ -24,10 +24,12 @@ class Luban {
     return answer.first;
   }
 
-  static Future<List<String>> compressImageList(List<CompressObject> objects) async {
+  static Future<List<String>> compressImageList(
+      List<CompressObject> objects) async {
     return compute(_lubanCompressList, objects);
   }
-  static void _lubanCompressQueue(SendPort port){
+
+  static void _lubanCompressQueue(SendPort port) {
     final rPort = ReceivePort();
     port.send(rPort.sendPort);
     rPort.listen((message) {
@@ -36,9 +38,10 @@ class Luban {
       send.send(_lubanCompress(object));
     });
   }
-  static List<String> _lubanCompressList(List<CompressObject> objects){
+
+  static List<String> _lubanCompressList(List<CompressObject> objects) {
     var results = [];
-    objects.forEach((_o){
+    objects.forEach((_o) {
       results.add(_lubanCompress(_o));
     });
     return results;
@@ -61,7 +64,7 @@ class Luban {
     double thumbW = (fixelW % 2 == 1 ? fixelW + 1 : fixelW).toDouble();
     double thumbH = (fixelH % 2 == 1 ? fixelH + 1 : fixelH).toDouble();
     double scale = 0;
-    if (fixelW > fixelH) {
+    if (fixelW> fixelH) {
       scale = fixelH / fixelW;
       var tempFixelH = fixelW;
       var tempFixelW = fixelH;
@@ -136,10 +139,15 @@ class Luban {
     }
     Image smallerImage;
     if (isLandscape) {
-      smallerImage = copyResize(image, width:thumbH.toInt(), height:thumbW.toInt());
+      smallerImage = copyResize(image,
+          width: thumbH.toInt(),
+          height: object.autoRatio ? null : thumbW.toInt());
     } else {
-      smallerImage = copyResize(image, width:thumbW.toInt(), height:thumbH.toInt());
+      smallerImage = copyResize(image,
+          width: thumbW.toInt(),
+          height: object.autoRatio ? null : thumbH.toInt());
     }
+
     if (decodedImageFile.existsSync()) {
       decodedImageFile.deleteSync();
     }
@@ -193,7 +201,7 @@ class Luban {
     step,
     bool isJpg: true,
   }) {
-    if(isJpg){
+    if (isJpg) {
       var im = encodeJpg(image, quality: quality);
       var tempImageSize = Uint8List.fromList(im).lengthInBytes;
       if (tempImageSize / 1024 > targetSize && quality > step) {
@@ -208,7 +216,7 @@ class Luban {
         return;
       }
       file.writeAsBytesSync(im);
-    }else{
+    } else {
       _compressPng(
         image: image,
         file: file,
@@ -225,7 +233,7 @@ class Luban {
     step,
     bool isJpg: true,
   }) {
-    if (isJpg){
+    if (isJpg) {
       var im = encodeJpg(image, quality: quality);
       var tempImageSize = Uint8List.fromList(im).lengthInBytes;
       if (tempImageSize / 1024 < targetSize && quality <= 100) {
@@ -241,7 +249,7 @@ class Luban {
         return;
       }
       file.writeAsBytesSync(im);
-    }else{
+    } else {
       _compressPng(
         image: image,
         file: file,
@@ -278,16 +286,19 @@ enum CompressMode {
 }
 
 class CompressObject {
-  File imageFile;
-  String path;
-  CompressMode mode;
-  int quality;
-  int step;
+  final File imageFile;
+  final String path;
+  final CompressMode mode;
+  final int quality;
+  final int step;
+  final bool autoRatio;
 
-  CompressObject(
-      {this.imageFile,
-      this.path,
-      this.mode: CompressMode.AUTO,
-      this.quality: 80,
-      this.step: 6});
+  CompressObject({
+    this.imageFile,
+    this.path,
+    this.mode: CompressMode.AUTO,
+    this.quality: 80,
+    this.step: 6,
+    this.autoRatio = true,
+  });
 }
