@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_luban/flutter_luban.dart';
-import 'package:zoomable_image/zoomable_image.dart';
 import 'util.dart';
 
 void main() => runApp(MyApp());
@@ -80,22 +79,22 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildImage(File imageFile, String text) => Expanded(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-                "${imageFile?.lengthSync() == null ? '' : Utils.getRollupSize(imageFile?.lengthSync())}"),
-            imageFile != null
-                ? GestureDetector(
-                    onTap: () {
-                      _showImagePop(imageFile);
-                    },
-                    child: Image.file(imageFile),
-                  )
-                : Text(text),
-          ],
-        ),
-      );
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Text(
+            "${imageFile?.lengthSync() == null ? '' : Utils.getRollupSize(imageFile?.lengthSync())}"),
+        imageFile != null
+            ? GestureDetector(
+          onTap: () {
+            _showImagePop(imageFile);
+          },
+          child: Image.file(imageFile),
+        )
+            : Text(text),
+      ],
+    ),
+  );
 
   _showImagePop(file) async {
     await showDialog(
@@ -106,7 +105,7 @@ class _MyHomePageState extends State<MyHomePage> {
             onTap: () {
               Navigator.of(context).pop();
             },
-            child: ZoomableImage(FileImage(file)),
+            child: Image.file(file),
           );
         });
   }
@@ -119,16 +118,16 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     if (imageFile == null) return;
     final tempDir = await getTemporaryDirectory();
-
     CompressObject compressObject = CompressObject(
       imageFile:imageFile, //image
       path:tempDir.path, //compress to path
       quality: 85,//first compress quality, default 80
       step: 9,//compress quality step, The bigger the fast, Smaller is more accurate, default 6
-//      mode: CompressMode.LARGE2SMALL,//default AUTO
+      mode: CompressMode.SMALL2LARGE,//default AUTO
     );
-    Luban.compressImage(compressObject).then((_path) {
+    Luban.compressImageQueue(compressObject).then((_path) {
       setState(() {
+        print(_path);
         compressedFile = File(_path);
         time = DateTime.now().millisecondsSinceEpoch - time_start;
       });
