@@ -291,6 +291,7 @@ class CompressObject {
   final CompressMode mode;
   final int quality;
   final int step;
+  ///If you are not sure whether the image detail property is correct, set true, otherwise the compressed ratio may be incorrect
   final bool autoRatio;
 
   CompressObject({
