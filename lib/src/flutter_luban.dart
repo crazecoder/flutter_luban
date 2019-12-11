@@ -64,7 +64,7 @@ class Luban {
     double thumbW = (fixelW % 2 == 1 ? fixelW + 1 : fixelW).toDouble();
     double thumbH = (fixelH % 2 == 1 ? fixelH + 1 : fixelH).toDouble();
     double scale = 0;
-    if (fixelW> fixelH) {
+    if (fixelW > fixelH) {
       scale = fixelH / fixelW;
       var tempFixelH = fixelW;
       var tempFixelW = fixelH;
@@ -291,6 +291,7 @@ class CompressObject {
   final CompressMode mode;
   final int quality;
   final int step;
+
   ///If you are not sure whether the image detail property is correct, set true, otherwise the compressed ratio may be incorrect
   final bool autoRatio;
 
