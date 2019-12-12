@@ -47,16 +47,28 @@ class Luban {
     return results;
   }
 
+  static bool _parseType(String path, List<String> suffix) {
+    bool _result = false;
+    for (int i = 0; i < suffix.length; i++) {
+      if (path.endsWith(suffix[i])) {
+        _result = true;
+        break;
+      }
+    }
+    return _result;
+  }
+
   static String _lubanCompress(CompressObject object) {
     Image image = decodeImage(object.imageFile.readAsBytesSync());
     var length = object.imageFile.lengthSync();
     print(object.imageFile.path);
     bool isLandscape = false;
-    bool isJpg = object.imageFile.path.endsWith("jpg") ||
-        object.imageFile.path.endsWith("jpeg");
+    const List<String> jpgSuffix = ["jpg", "jpeg", "JPG", "JPEG"];
+    const List<String> pngSuffix = ["png", "PNG"];
+    bool isJpg = _parseType(object.imageFile.path, jpgSuffix);
     bool isPng = false;
 
-    if (!isJpg) isPng = object.imageFile.path.endsWith("png");
+    if (!isJpg) isPng = _parseType(object.imageFile.path, pngSuffix);
 
     double size;
     int fixelW = image.width;
