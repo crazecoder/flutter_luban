@@ -47,16 +47,28 @@ class Luban {
     return results;
   }
 
+  static bool _parseType(String path, List<String> suffix) {
+    bool _result = false;
+    for (int i = 0; i < suffix.length; i++) {
+      if (path.endsWith(suffix[i])) {
+        _result = true;
+        break;
+      }
+    }
+    return _result;
+  }
+
   static String _lubanCompress(CompressObject object) {
     Image image = decodeImage(object.imageFile.readAsBytesSync());
     var length = object.imageFile.lengthSync();
     print(object.imageFile.path);
     bool isLandscape = false;
-    bool isJpg = object.imageFile.path.endsWith("jpg") ||
-        object.imageFile.path.endsWith("jpeg");
+    const List<String> jpgSuffix = ["jpg", "jpeg", "JPG", "JPEG"];
+    const List<String> pngSuffix = ["png", "PNG"];
+    bool isJpg = _parseType(object.imageFile.path, jpgSuffix);
     bool isPng = false;
 
-    if (!isJpg) isPng = object.imageFile.path.endsWith("png");
+    if (!isJpg) isPng = _parseType(object.imageFile.path, pngSuffix);
 
     double size;
     int fixelW = image.width;
@@ -64,7 +76,7 @@ class Luban {
     double thumbW = (fixelW % 2 == 1 ? fixelW + 1 : fixelW).toDouble();
     double thumbH = (fixelH % 2 == 1 ? fixelH + 1 : fixelH).toDouble();
     double scale = 0;
-    if (fixelW> fixelH) {
+    if (fixelW > fixelH) {
       scale = fixelH / fixelW;
       var tempFixelH = fixelW;
       var tempFixelW = fixelH;
@@ -221,6 +233,7 @@ class Luban {
         image: image,
         file: file,
         targetSize: targetSize,
+        large2Small: true,
       );
     }
   }
@@ -254,27 +267,41 @@ class Luban {
         image: image,
         file: file,
         targetSize: targetSize,
+        large2Small: false,
       );
     }
   }
 
+  ///level 1~9  level++ -> image--
   static void _compressPng({
     Image image,
     File file,
-    level: 9,
+    level,
     targetSize,
+    bool large2Small,
   }) {
-    var im = encodePng(image, level: level);
-    var tempImageSize = Uint8List.fromList(im).lengthInBytes;
-    if (tempImageSize / 1024 < targetSize) {
-      _small2LargeCompressImage(
-        image: image,
-        file: file,
-        targetSize: targetSize,
-        isJpg: false,
-      );
-      return;
+    var _level;
+    if (large2Small) {
+      _level = level ?? 1;
+    } else {
+      _level = level ?? 9;
     }
+    List<int> im = encodePng(image, level: _level);
+    if (_level > 9 || _level < 1) {
+    } else {
+      var tempImageSize = Uint8List.fromList(im).lengthInBytes;
+      if (tempImageSize / 1024 > targetSize) {
+        _compressPng(
+          image: image,
+          file: file,
+          targetSize: targetSize,
+          level: large2Small ? _level + 1 : _level - 1,
+          large2Small: large2Small,
+        );
+        return;
+      }
+    }
+
     file.writeAsBytesSync(im);
   }
 }
@@ -291,6 +318,8 @@ class CompressObject {
   final CompressMode mode;
   final int quality;
   final int step;
+
+  ///If you are not sure whether the image detail property is correct, set true, otherwise the compressed ratio may be incorrect
   final bool autoRatio;
 
   CompressObject({
