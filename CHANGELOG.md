@@ -1,5 +1,5 @@
-## 0.1.10
-* upgrade image: ^2.1.10 
+## 0.1.11
+* upgrade image: ^2.1.11
 * Fixed loop _compressPng
 ## 0.1.9
 * upgrade image: ^2.1.9 (Optimize jpegDecode)
