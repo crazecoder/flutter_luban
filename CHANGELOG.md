@@ -1,3 +1,6 @@
+## 0.1.12
+* upgrade image: ^3.0.2
+* Migrate to null safety
 ## 0.1.11
 * upgrade image: ^2.1.11
 * Fixed loop _compressPng
