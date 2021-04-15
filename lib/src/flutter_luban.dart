@@ -12,7 +12,10 @@ class Luban {
   Luban._();
 
   static Future<String> compressImage(CompressObject object) async {
-    return compute(_lubanCompress as FutureOr<String> Function(dynamic), object);
+    return compute(
+      _lubanCompress as FutureOr<String> Function(CompressObject),
+      object,
+    );
   }
 
   static Future<dynamic> compressImageQueue(CompressObject object) async {
