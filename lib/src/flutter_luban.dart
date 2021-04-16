@@ -1,18 +1,17 @@
-import 'dart:io';
-
 import 'dart:async';
+import 'dart:io';
 import 'dart:isolate';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart';
-import 'dart:math';
 
 class Luban {
   Luban._();
 
-  static Future<String> compressImage(CompressObject object) async {
-    return compute(_lubanCompress as FutureOr<String> Function(dynamic), object);
+  static Future<String?> compressImage(CompressObject object) async {
+    return compute(_lubanCompress, object);
   }
 
   static Future<dynamic> compressImageQueue(CompressObject object) async {
