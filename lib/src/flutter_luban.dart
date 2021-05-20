@@ -12,24 +12,19 @@ class Luban {
   Luban._();
 
   static Future<List<int>?> compressImage(CompressObject object) async {
-    return compute(_lubanCompress, object);
-  }
-
-  static Future<File?> compressAndSaveImage(
-      CompressObject object, String path) async {
-    if (!Foundation.kIsWeb) {
+    if (Foundation.kIsWeb || (object.path == null || object.path!.isEmpty)) {
+      return compute(_lubanCompress, object);
+    } else {
       List<int>? bytes = await compute(_lubanCompress, object);
       if (bytes == null) {
         return null;
       }
-      File file = File(path);
+      File file = File(object.path!);
       if (!file.existsSync()) {
         file.createSync(recursive: true);
       }
       file.writeAsBytesSync(bytes, flush: true);
-      return file;
-    } else {
-      throw ('This function is not supported on the web');
+      return bytes;
     }
   }
 
@@ -290,16 +285,17 @@ class CompressObject {
   final CompressMode mode;
   final int quality;
   final int step;
+  final String? path;
 
   ///If you are not sure whether the image detail property is correct, set true, otherwise the compressed ratio may be incorrect
   final bool autoRatio;
 
-  CompressObject({
-    required this.bytes,
-    required this.imageType,
-    this.mode: CompressMode.AUTO,
-    this.quality: 80,
-    this.step: 6,
-    this.autoRatio = true,
-  });
+  CompressObject(
+      {required this.bytes,
+      required this.imageType,
+      this.mode: CompressMode.AUTO,
+      this.quality: 80,
+      this.step: 6,
+      this.autoRatio = true,
+      this.path});
 }
