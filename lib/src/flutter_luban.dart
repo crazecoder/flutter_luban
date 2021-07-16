@@ -254,7 +254,7 @@ class Luban {
       _level = level ?? 9;
     }
     List<int> im = encodePng(image, level: _level);
-    if (_level > 9 || _level < 1) {
+    if (_level >= 9 || _level <= 1) {
     } else {
       var tempImageSize = Uint8List.fromList(im).lengthInBytes;
       if (tempImageSize / 1024 > targetSize) {
