@@ -1,10 +1,10 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_luban/flutter_luban.dart';
-import 'package:zoomable_image/zoomable_image.dart';
+import 'package:photo_view/photo_view.dart';
 import 'util.dart';
 
 void main() => runApp(MyApp());
@@ -33,8 +33,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  File primaryFile;
-  File compressedFile;
+  Uint8List primaryFile;
+  Uint8List compressedFile;
   var time_start = 0;
   var time = 0;
 
@@ -64,13 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
         children: <Widget>[
           FloatingActionButton(
             onPressed: () {
-              _pickImage(ImageSource.camera);
-            },
-            child: Icon(Icons.camera),
-          ),
-          FloatingActionButton(
-            onPressed: () {
-              _pickImage(ImageSource.gallery);
+              _pickImage();
             },
             child: Icon(Icons.photo),
           )
@@ -79,25 +73,24 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildImage(File imageFile, String text) => Expanded(
+  Widget _buildImage(Uint8List imageFile, String text) => Expanded(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-                "${imageFile?.lengthSync() == null ? '' : Utils.getRollupSize(imageFile?.lengthSync())}"),
+            Text("${Utils.getRollupSize(imageFile?.length ?? 0)}"),
             imageFile != null
                 ? GestureDetector(
                     onTap: () {
                       _showImagePop(imageFile);
                     },
-                    child: Image.file(imageFile),
+                    child: Image.memory(imageFile),
                   )
                 : Text(text),
           ],
         ),
       );
 
-  _showImagePop(file) async {
+  _showImagePop(Uint8List file) async {
     await showDialog(
         context: context,
         barrierDismissible: false,
@@ -106,30 +99,31 @@ class _MyHomePageState extends State<MyHomePage> {
             onTap: () {
               Navigator.of(context).pop();
             },
-            child: ZoomableImage(FileImage(file)),
+            child: PhotoView(imageProvider: MemoryImage(file)),
           );
         });
   }
 
-  _pickImage(ImageSource type) async {
-    File imageFile = await ImagePicker.pickImage(source: type);
+  _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
     setState(() {
-      primaryFile = imageFile;
+      // primaryFile = imageFile;
       time_start = DateTime.now().millisecondsSinceEpoch;
     });
-    if (imageFile == null) return;
-    final tempDir = await getTemporaryDirectory();
-
+    if (result == null) return;
+    final String imageExt = result.files.first.name.split(".").last;
+    final Uint8List imageBytes = result.files.first.bytes ??
+        File(result.files.first.path).readAsBytesSync();
     CompressObject compressObject = CompressObject(
-      imageFile:imageFile, //image
-      path:tempDir.path, //compress to path
-      quality: 85,//first compress quality, default 80
-      step: 9,//compress quality step, The bigger the fast, Smaller is more accurate, default 6
-//      mode: CompressMode.LARGE2SMALL,//default AUTO
+      imageExt: imageExt,
+      imageBytes: imageBytes,
+      quality: 85,
+      step: 9,
     );
-    Luban.compressImage(compressObject).then((_path) {
+    Luban.compressRowImage(compressObject).then((compressedBytes) {
       setState(() {
-        compressedFile = File(_path);
+        primaryFile = imageBytes;
+        compressedFile = compressedBytes;
         time = DateTime.now().millisecondsSinceEpoch - time_start;
       });
     });
