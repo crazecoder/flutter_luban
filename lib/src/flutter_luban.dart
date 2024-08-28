@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart';
@@ -11,6 +10,8 @@ class Luban {
   Luban._();
 
   static Future<String?> compressImage(CompressObject object) async {
+    if (kIsWeb)
+      throw "Because the web does not support isolate, it does not support web image compression for the time being";
     return compute(_lubanCompress, object);
   }
 
@@ -324,9 +325,9 @@ class CompressObject {
   CompressObject({
     this.imageFile,
     this.path,
-    this.mode: CompressMode.AUTO,
-    this.quality: 80,
-    this.step: 6,
+    this.mode = CompressMode.AUTO,
+    this.quality = 80,
+    this.step = 6,
     this.autoRatio = true,
   });
 }
