@@ -1,3 +1,7 @@
+## 0.1.14
+* upgrade image: ^4.2.0
+## 0.1.13
+* fix type cast exception thx [leoafarias](https://github.com/leoafarias)
 ## 0.1.12
 * upgrade image: ^3.0.2
 * Migrate to null safety
