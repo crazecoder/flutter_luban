@@ -10,8 +10,9 @@ class Luban {
   Luban._();
 
   static Future<String?> compressImage(CompressObject object) async {
-    if (kIsWeb)
+    if (kIsWeb) {
       throw "Because the web does not support isolate, it does not support web image compression for the time being";
+    }
     return compute(_lubanCompress, object);
   }
 
@@ -48,28 +49,42 @@ class Luban {
   }
 
   static bool _parseType(String path, List<String> suffix) {
-    bool _result = false;
+    bool result = false;
     for (int i = 0; i < suffix.length; i++) {
       if (path.endsWith(suffix[i])) {
-        _result = true;
+        result = true;
         break;
       }
     }
-    return _result;
+    return result;
   }
 
   static String? _lubanCompress(CompressObject object) {
-    Image image = decodeImage(object.imageFile!.readAsBytesSync())!;
-    var length = object.imageFile!.lengthSync();
-    print(object.imageFile!.path);
-    bool isLandscape = false;
+
     const List<String> jpgSuffix = ["jpg", "jpeg", "JPG", "JPEG"];
     const List<String> pngSuffix = ["png", "PNG"];
-    bool isJpg = _parseType(object.imageFile!.path, jpgSuffix);
+    bool isJpg = _parseType(object.imageFile.path, jpgSuffix);
     bool isPng = false;
 
-    if (!isJpg) isPng = _parseType(object.imageFile!.path, pngSuffix);
+    if (!isJpg) isPng = _parseType(object.imageFile.path, pngSuffix);
+    final originalFileName = object.imageFile.path.split("/").last;
+    File? decodedImageFile;
+    if (isJpg || isPng) {
+      decodedImageFile = File(
+          '${object.targetPath}/luban_$originalFileName.${isPng ? "png" : "jpg"}');
+    } else {
+      throw Exception("flutter_luban don't support this image type");
+    }
+    if (decodedImageFile.existsSync()) {
+      if (object.useCache) {
+        return decodedImageFile.path;
+      }
+      decodedImageFile.deleteSync();
+    }
 
+    Image image = decodeImage(object.imageFile.readAsBytesSync())!;
+    var length = object.imageFile.lengthSync();
+    bool isLandscape = false;
     double size;
     int fixelW = image.width;
     int fixelH = image.height;
@@ -86,19 +101,7 @@ class Luban {
     } else {
       scale = fixelW / fixelH;
     }
-    var decodedImageFile;
-    if (isJpg)
-      decodedImageFile = new File(
-          object.path! + '/img_${DateTime.now().millisecondsSinceEpoch}.jpg');
-    else if (isPng)
-      decodedImageFile = new File(
-          object.path! + '/img_${DateTime.now().millisecondsSinceEpoch}.png');
-    else
-      throw Exception("flutter_luban don't support this image type");
 
-    if (decodedImageFile.existsSync()) {
-      decodedImageFile.deleteSync();
-    }
     var imageSize = length / 1024;
     if (scale <= 1 && scale > 0.5625) {
       if (fixelH < 1664) {
@@ -211,7 +214,7 @@ class Luban {
     quality,
     targetSize,
     step,
-    bool isJpg: true,
+    bool isJpg = true,
   }) {
     if (isJpg) {
       var im = encodeJpg(image!, quality: quality);
@@ -244,7 +247,7 @@ class Luban {
     quality,
     targetSize,
     step,
-    bool isJpg: true,
+    bool isJpg = true,
   }) {
     if (isJpg) {
       var im = encodeJpg(image!, quality: quality);
@@ -313,9 +316,10 @@ enum CompressMode {
 }
 
 class CompressObject {
-  final File? imageFile;
-  final String? path;
+  final File imageFile;
+  final String targetPath;
   final CompressMode mode;
+  final bool useCache;
   final int quality;
   final int step;
 
@@ -323,9 +327,10 @@ class CompressObject {
   final bool autoRatio;
 
   CompressObject({
-    this.imageFile,
-    this.path,
+    required this.imageFile,
+    required this.targetPath,
     this.mode = CompressMode.AUTO,
+    this.useCache = false,
     this.quality = 80,
     this.step = 6,
     this.autoRatio = true,
