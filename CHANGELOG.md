@@ -1,3 +1,7 @@
+## 0.1.15
+* upgrade image: ^4.5.4
+* change path to targetPath
+* add useCache
 ## 0.1.14
 * upgrade image: ^4.2.0
 ## 0.1.13
