@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart' as Foundation;
 
 import 'package:flutter/foundation.dart';
@@ -186,7 +185,7 @@ class Luban {
     quality,
     targetSize,
     step,
-    bool isJpg: true,
+    bool isJpg = true,
   }) {
     if (isJpg) {
       var im = encodeJpg(image!, quality: quality);
@@ -215,7 +214,7 @@ class Luban {
     quality,
     targetSize,
     step,
-    bool isJpg: true,
+    bool isJpg = true,
   }) {
     if (isJpg) {
       var im = encodeJpg(image!, quality: quality);
@@ -290,12 +289,13 @@ class CompressObject {
   ///If you are not sure whether the image detail property is correct, set true, otherwise the compressed ratio may be incorrect
   final bool autoRatio;
 
-  CompressObject(
-      {required this.bytes,
-      required this.imageType,
-      this.mode: CompressMode.AUTO,
-      this.quality: 80,
-      this.step: 6,
-      this.autoRatio = true,
-      this.path});
+  CompressObject({
+    required this.bytes,
+    required this.imageType,
+    this.mode = CompressMode.AUTO,
+    this.quality = 80,
+    this.step = 6,
+    this.autoRatio = true,
+    this.path,
+  });
 }
