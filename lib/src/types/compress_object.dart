@@ -1,23 +1,18 @@
 import 'dart:io';
 
-import 'compress_mode.dart';
-
 class CompressObject {
-  final File? imageFile;
-  final String? path;
-  final CompressMode mode;
-  final int quality;
-  final int step;
-
-  ///If you are not sure whether the image detail property is correct, set true, otherwise the compressed ratio may be incorrect
-  final bool autoRatio;
+  final File imageFile;
+  ///compress to path
+  final String targetPath;
+  ///If there is a cache, no compression will be performed
+  final bool useCache;
+  ///Convert the image to jpg
+  final bool toJpg;
 
   CompressObject({
-    this.imageFile,
-    this.path,
-    this.mode = CompressMode.AUTO,
-    this.quality = 80,
-    this.step = 6,
-    this.autoRatio = true,
+    required this.imageFile,
+    required this.targetPath,
+    this.useCache = false,
+    this.toJpg = false,
   });
 }

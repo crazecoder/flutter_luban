@@ -1,12 +1,18 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
-import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_luban/src/utils/calculator.dart';
+import 'package:flutter_luban/src/utils/compressor.dart';
+import 'package:flutter_luban/src/utils/image_parser.dart';
 import 'package:image/image.dart';
 
+import 'types/compress_object.dart';
+
 class Luban {
+  static final CompressionCalculator _calculator = CompressionCalculator();
+
   Luban._();
 
   static Future<String?> compressImage(CompressObject object) async {
@@ -48,291 +54,41 @@ class Luban {
     return results as List<String?>;
   }
 
-  static bool _parseType(String path, List<String> suffix) {
-    bool result = false;
-    for (int i = 0; i < suffix.length; i++) {
-      if (path.endsWith(suffix[i])) {
-        result = true;
-        break;
-      }
-    }
-    return result;
-  }
-
-  static String? _lubanCompress(CompressObject object) {
-
-    const List<String> jpgSuffix = ["jpg", "jpeg", "JPG", "JPEG"];
-    const List<String> pngSuffix = ["png", "PNG"];
-    bool isJpg = _parseType(object.imageFile.path, jpgSuffix);
-    bool isPng = false;
-
-    if (!isJpg) isPng = _parseType(object.imageFile.path, pngSuffix);
-    final originalFileName = object.imageFile.path.split("/").last;
-    File? decodedImageFile;
-    if (isJpg || isPng) {
-      decodedImageFile = File(
-          '${object.targetPath}/luban_$originalFileName.${isPng ? "png" : "jpg"}');
-    } else {
+  static Future<String?> _lubanCompress(CompressObject object) async {
+    Image? image = decodeImage(object.imageFile.readAsBytesSync());
+    if (image == null) {
       throw Exception("flutter_luban don't support this image type");
     }
+    ImageFormat format = ImageFormat.jpg;
+    if (object.toJpg) {
+      image = ImageParser.convertToJpg(image) ?? image;
+    } else {
+      format = ImageParser.parseFormat(object.imageFile.path);
+    }
+    final originalFileName = object.imageFile.path.split("/").last;
+    File? decodedImageFile;
+    decodedImageFile = File(
+        '${object.targetPath}/luban_$originalFileName.${ImageParser.getSuffix(format)}');
     if (decodedImageFile.existsSync()) {
       if (object.useCache) {
         return decodedImageFile.path;
       }
       decodedImageFile.deleteSync();
     }
-
-    Image image = decodeImage(object.imageFile.readAsBytesSync())!;
-    var length = object.imageFile.lengthSync();
-    bool isLandscape = false;
-    double size;
-    int fixelW = image.width;
-    int fixelH = image.height;
-    double thumbW = (fixelW % 2 == 1 ? fixelW + 1 : fixelW).toDouble();
-    double thumbH = (fixelH % 2 == 1 ? fixelH + 1 : fixelH).toDouble();
-    double scale = 0;
-    if (fixelW > fixelH) {
-      scale = fixelH / fixelW;
-      var tempFixelH = fixelW;
-      var tempFixelW = fixelH;
-      fixelH = tempFixelH;
-      fixelW = tempFixelW;
-      isLandscape = true;
-    } else {
-      scale = fixelW / fixelH;
-    }
-
-    var imageSize = length / 1024;
-    if (scale <= 1 && scale > 0.5625) {
-      if (fixelH < 1664) {
-        if (imageSize < 150) {
-          decodedImageFile
-              .writeAsBytesSync(encodeJpg(image, quality: object.quality));
-          return decodedImageFile.path;
-        }
-        size = (fixelW * fixelH) / pow(1664, 2) * 150;
-        size = size < 60 ? 60 : size;
-      } else if (fixelH >= 1664 && fixelH < 4990) {
-        thumbW = fixelW / 2;
-        thumbH = fixelH / 2;
-        size = (thumbH * thumbW) / pow(2495, 2) * 300;
-        size = size < 60 ? 60 : size;
-      } else if (fixelH >= 4990 && fixelH < 10240) {
-        thumbW = fixelW / 4;
-        thumbH = fixelH / 4;
-        size = (thumbW * thumbH) / pow(2560, 2) * 300;
-        size = size < 100 ? 100 : size;
-      } else {
-        int multiple = fixelH / 1280 == 0 ? 1 : fixelH ~/ 1280;
-        thumbW = fixelW / multiple;
-        thumbH = fixelH / multiple;
-        size = (thumbW * thumbH) / pow(2560, 2) * 300;
-        size = size < 100 ? 100 : size;
-      }
-    } else if (scale <= 0.5625 && scale >= 0.5) {
-      if (fixelH < 1280 && imageSize < 200) {
-        decodedImageFile
-            .writeAsBytesSync(encodeJpg(image, quality: object.quality));
-        return decodedImageFile.path;
-      }
-      int multiple = fixelH / 1280 == 0 ? 1 : fixelH ~/ 1280;
-      thumbW = fixelW / multiple;
-      thumbH = fixelH / multiple;
-      size = (thumbW * thumbH) / (1440.0 * 2560.0) * 200;
-      size = size < 100 ? 100 : size;
-    } else {
-      int multiple = (fixelH / (1280.0 / scale)).ceil();
-      thumbW = fixelW / multiple;
-      thumbH = fixelH / multiple;
-      size = ((thumbW * thumbH) / (1280.0 * (1280 / scale))) * 500;
-      size = size < 100 ? 100 : size;
-    }
-    if (imageSize < size) {
-      decodedImageFile
-          .writeAsBytesSync(encodeJpg(image, quality: object.quality));
-      return decodedImageFile.path;
-    }
-    Image smallerImage;
-    if (isLandscape) {
-      smallerImage = copyResize(image,
-          width: thumbH.toInt(),
-          height: object.autoRatio ? null : thumbW.toInt());
-    } else {
-      smallerImage = copyResize(image,
-          width: thumbW.toInt(),
-          height: object.autoRatio ? null : thumbH.toInt());
-    }
-
-    if (decodedImageFile.existsSync()) {
-      decodedImageFile.deleteSync();
-    }
-    if (object.mode == CompressMode.LARGE2SMALL) {
-      _large2SmallCompressImage(
-        image: smallerImage,
-        file: decodedImageFile,
-        quality: object.quality,
-        targetSize: size,
-        step: object.step,
-        isJpg: isJpg,
+    final target = _calculator.calculateTarget(image.width, image.height);
+    if (target.width > 0 && target.width < image.width) {
+      image = copyResize(
+        image,
+        width: target.width,
+        height: target.height,
       );
-    } else if (object.mode == CompressMode.SMALL2LARGE) {
-      _small2LargeCompressImage(
-        image: smallerImage,
-        file: decodedImageFile,
-        quality: object.step,
-        targetSize: size,
-        step: object.step,
-        isJpg: isJpg,
-      );
-    } else {
-      if (imageSize < 500) {
-        _large2SmallCompressImage(
-          image: smallerImage,
-          file: decodedImageFile,
-          quality: object.quality,
-          targetSize: size,
-          step: object.step,
-          isJpg: isJpg,
-        );
-      } else {
-        _small2LargeCompressImage(
-          image: smallerImage,
-          file: decodedImageFile,
-          quality: object.step,
-          targetSize: size,
-          step: object.step,
-          isJpg: isJpg,
-        );
-      }
     }
+    final data = Compressor.compress(
+      image,
+      targetSizeKb: target.targetSizeKb,
+      imageFormat: format,
+    );
+    decodedImageFile.writeAsBytesSync(data);
     return decodedImageFile.path;
   }
-
-  static _large2SmallCompressImage({
-    Image? image,
-    File? file,
-    quality,
-    targetSize,
-    step,
-    bool isJpg = true,
-  }) {
-    if (isJpg) {
-      var im = encodeJpg(image!, quality: quality);
-      var tempImageSize = Uint8List.fromList(im).lengthInBytes;
-      if (tempImageSize / 1024 > targetSize && quality > step) {
-        quality -= step;
-        _large2SmallCompressImage(
-          image: image,
-          file: file,
-          quality: quality,
-          targetSize: targetSize,
-          step: step,
-        );
-        return;
-      }
-      file!.writeAsBytesSync(im);
-    } else {
-      _compressPng(
-        image: image!,
-        file: file,
-        targetSize: targetSize,
-        large2Small: true,
-      );
-    }
-  }
-
-  static _small2LargeCompressImage({
-    Image? image,
-    File? file,
-    quality,
-    targetSize,
-    step,
-    bool isJpg = true,
-  }) {
-    if (isJpg) {
-      var im = encodeJpg(image!, quality: quality);
-      var tempImageSize = Uint8List.fromList(im).lengthInBytes;
-      if (tempImageSize / 1024 < targetSize && quality <= 100) {
-        quality += step;
-        _small2LargeCompressImage(
-          image: image,
-          file: file,
-          quality: quality,
-          targetSize: targetSize,
-          step: step,
-          isJpg: isJpg,
-        );
-        return;
-      }
-      file!.writeAsBytesSync(im);
-    } else {
-      _compressPng(
-        image: image!,
-        file: file,
-        targetSize: targetSize,
-        large2Small: false,
-      );
-    }
-  }
-
-  ///level 1~9  level++ -> image--
-  static void _compressPng({
-    required Image image,
-    File? file,
-    level,
-    targetSize,
-    required bool large2Small,
-  }) {
-    var _level;
-    if (large2Small) {
-      _level = level ?? 1;
-    } else {
-      _level = level ?? 9;
-    }
-    List<int> im = encodePng(image, level: _level);
-    if (_level > 9 || _level < 1) {
-    } else {
-      var tempImageSize = Uint8List.fromList(im).lengthInBytes;
-      if (tempImageSize / 1024 > targetSize) {
-        _compressPng(
-          image: image,
-          file: file,
-          targetSize: targetSize,
-          level: large2Small ? _level + 1 : _level - 1,
-          large2Small: large2Small,
-        );
-        return;
-      }
-    }
-
-    file!.writeAsBytesSync(im);
-  }
-}
-
-enum CompressMode {
-  SMALL2LARGE,
-  LARGE2SMALL,
-  AUTO,
-}
-
-class CompressObject {
-  final File imageFile;
-  final String targetPath;
-  final CompressMode mode;
-  final bool useCache;
-  final int quality;
-  final int step;
-
-  ///If you are not sure whether the image detail property is correct, set true, otherwise the compressed ratio may be incorrect
-  final bool autoRatio;
-
-  CompressObject({
-    required this.imageFile,
-    required this.targetPath,
-    this.mode = CompressMode.AUTO,
-    this.useCache = false,
-    this.quality = 80,
-    this.step = 6,
-    this.autoRatio = true,
-  });
 }

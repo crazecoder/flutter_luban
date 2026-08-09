@@ -1,3 +1,9 @@
+## 2.0.0
+* Implement the algorithm of luban2
+* Optimize compression performance
+* upgrade image: ^4.9.1
+* Minimum Flutter version is 3.10.0
+* Minimum Dart version is 3.0.0
 ## 0.1.15
 * upgrade image: ^4.5.4
 * change path to targetPath
