@@ -7,15 +7,35 @@ class ImageParser {
 
   ImageParser._();
 
-  static Image? convertToJpg(
-    Image image, {
-    int quality = 90,
-  }) {
-    final bytes = encodeJpg(
-      image,
-      quality: quality,
+  /// convert image to RGB
+  static Image convertToRgb(Image source, {bool isOld = false}) {
+    if (isOld) {
+      return _convertToRgbOld(source);
+    }
+    return source.convert(numChannels: 3);
+  }
+
+  static Image _convertToRgbOld(Image source) {
+    final result = Image(
+      width: source.width,
+      height: source.height,
+      numChannels: 3,
     );
-    return decodeImage(bytes);
+
+    for (var y = 0; y < source.height; y++) {
+      for (var x = 0; x < source.width; x++) {
+        final pixel = source.getPixel(x, y);
+        result.setPixelRgb(
+          x,
+          y,
+          pixel.r.toInt(),
+          pixel.g.toInt(),
+          pixel.b.toInt(),
+        );
+      }
+    }
+
+    return result;
   }
 
   static String getSuffix(ImageFormat imageFormat) {
@@ -29,13 +49,15 @@ class ImageParser {
     }
   }
 
-  static ImageFormat parseFormat(String path) {
-    if (_parseType(path, _jpgSuffix)) {
-      return ImageFormat.jpg;
-    } else if (_parseType(path, _pngSuffix)) {
-      return ImageFormat.png;
-    } else if (_parseType(path, _webpSuffix)) {
-      return ImageFormat.webp;
+  static ImageFormat parseFormat(bool toRgb,String path) {
+    if(!toRgb){
+      if (_parseType(path, _jpgSuffix)) {
+        return ImageFormat.jpg;
+      } else if (_parseType(path, _pngSuffix)) {
+        return ImageFormat.png;
+      } else if (_parseType(path, _webpSuffix)) {
+        return ImageFormat.webp;
+      }
     }
     return ImageFormat.jpg;
   }

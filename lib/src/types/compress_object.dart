@@ -1,18 +1,28 @@
-import 'dart:io';
+
+import 'package:cross_file/cross_file.dart';
 
 class CompressObject {
-  final File imageFile;
+  final XFile imageXFile;
+
   ///compress to path
-  final String targetPath;
+  ///web invalid
+  final String? targetPath;
+
   ///If there is a cache, no compression will be performed
+  ///web invalid
   final bool useCache;
-  ///Convert the image to jpg
-  final bool toJpg;
+
+  ///16/32/64/128/256/512/1024/2048+
+  final int numberOfColors;
+
+  ///convert image to RGB
+  final bool toRgb;
 
   CompressObject({
-    required this.imageFile,
-    required this.targetPath,
-    this.useCache = false,
-    this.toJpg = false,
+    required this.imageXFile,
+    this.targetPath,
+    this.useCache = true,
+    this.toRgb = true,
+    this.numberOfColors = 128,
   });
 }

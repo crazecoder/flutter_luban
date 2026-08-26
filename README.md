@@ -3,21 +3,22 @@
 
 An image compress package like [Luban](https://github.com/Curzibn/Luban) for Dart, based on [image](https://github.com/brendan-duncan/image).This library has no system platform constraints.
 
-If ```toJpg: true``` , it supports all readable image formats 
+If ```toRgb: true``` , it supports all readable image formats 
 
 [Readable Format](https://github.com/brendan-duncan/image/blob/main/doc/formats.md)
 
 ### Example
 ```dart
    CompressObject compressObject = CompressObject(
-         imageFile:imageFile, //image
-         path:tempDir.path, //compress to path
+         imageXFile: imageXFile, //image file
+         path: tempDir.path, //compress to path, default Directory.systemTemp.path
          useCache: true, //If there is a cache, no compression will be performed
-         toJpg: true, //Convert the image to jpg
+         toRgb: true, //Convert the image to jpg
+         numberOfColors: 128, //the numberOfColors of image.quantize
        );
-    Luban.compressImage(compressObject).then((_path) {
+    Luban.compressImage(compressObject).then((xfile) {
         setState(() {
-          print(_path);
+          print(xfile.path);
         });
     });
 ```

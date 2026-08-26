@@ -1,3 +1,8 @@
+## 2.1.0
+* Use cross_file for web adaptation
+* add targetPath default value
+* Change "toJpg" to "toRgb" 
+* upgrade image: ^4.9.2
 ## 2.0.0
 * Implement the algorithm of luban2
 * Optimize compression performance

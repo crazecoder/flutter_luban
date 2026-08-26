@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:flutter_luban/src/utils/image_parser.dart';
 import 'package:image/image.dart' as img;
 
 class Compressor {
@@ -8,28 +9,28 @@ class Compressor {
     img.Image image, {
     int? targetSizeKb,
     int? fixedQuality,
+    int numberOfColors = 128,
     img.ImageFormat imageFormat = img.ImageFormat.jpg,
   }) {
-    final rgbImage =
-        imageFormat != img.ImageFormat.png ? _convertToRgb(image) : image;
+    final rgbImage = imageFormat == img.ImageFormat.jpg
+        ? ImageParser.convertToRgb(image)
+        : image;
 
     if (fixedQuality != null) {
-      return Uint8List.fromList(
-        _encodeImage(
-          rgbImage,
-          quality: fixedQuality,
-          imageFormat: imageFormat,
-        ),
+      return _encodeImage(
+        rgbImage,
+        quality: fixedQuality,
+        imageFormat: imageFormat,
+        numberOfColors: numberOfColors,
       );
     }
 
     if (targetSizeKb == null) {
-      return Uint8List.fromList(
-        _encodeImage(
-          rgbImage,
-          quality: 60,
-          imageFormat: imageFormat,
-        ),
+      return _encodeImage(
+        rgbImage,
+        quality: 60,
+        imageFormat: imageFormat,
+        numberOfColors: numberOfColors,
       );
     }
 
@@ -39,12 +40,11 @@ class Compressor {
     Uint8List? bestData;
 
     // test highest quality
-    final testResult = Uint8List.fromList(
-      _encodeImage(
-        rgbImage,
-        quality: 95,
-        imageFormat: imageFormat,
-      ),
+    final testResult = _encodeImage(
+      rgbImage,
+      quality: 95,
+      imageFormat: imageFormat,
+      numberOfColors: numberOfColors,
     );
 
     final sizeKb = testResult.length / 1024.0;
@@ -64,12 +64,11 @@ class Compressor {
           break;
         }
       }
-      final compressed = Uint8List.fromList(
-        _encodeImage(
-          rgbImage,
-          quality: mid,
-          imageFormat: imageFormat,
-        ),
+      final compressed = _encodeImage(
+        rgbImage,
+        quality: mid,
+        imageFormat: imageFormat,
+        numberOfColors: numberOfColors,
       );
 
       final currentSizeKb = compressed.length / 1024.0;
@@ -77,19 +76,18 @@ class Compressor {
       if (currentSizeKb <= targetSizeKb) {
         bestData = compressed;
 
-        // 可以尝试更高质量
+        // try higher quality
         currentLow = mid + 1;
       } else {
         currentHigh = mid - 1;
       }
     }
 
-    bestData ??= Uint8List.fromList(
-      _encodeImage(
-        rgbImage,
-        quality: 5,
-        imageFormat: imageFormat,
-      ),
+    bestData ??= _encodeImage(
+      rgbImage,
+      quality: 5,
+      imageFormat: imageFormat,
+      numberOfColors: numberOfColors,
     );
 
     return bestData;
@@ -98,15 +96,18 @@ class Compressor {
   static Uint8List _encodeImage(
     img.Image image, {
     int quality = 100,
+    int numberOfColors = 128,
     img.ImageFormat imageFormat = img.ImageFormat.jpg,
   }) {
     switch (imageFormat) {
       case img.ImageFormat.png:
         return img.encodePng(
-          img.quantize(
-            image,
-            numberOfColors: 128,
-          ),
+          image.hasAlpha
+              ? image
+              : img.quantize(
+                  image,
+                  numberOfColors: numberOfColors,
+                ),
           level: _getLevel(quality),
         );
       default:
@@ -115,30 +116,6 @@ class Compressor {
           quality: quality,
         );
     }
-  }
-
-  /// convert image to RGB
-  static img.Image _convertToRgb(img.Image source) {
-    final result = img.Image(
-      width: source.width,
-      height: source.height,
-      numChannels: 3,
-    );
-
-    for (var y = 0; y < source.height; y++) {
-      for (var x = 0; x < source.width; x++) {
-        final pixel = source.getPixel(x, y);
-        result.setPixelRgb(
-          x,
-          y,
-          pixel.r.toInt(),
-          pixel.g.toInt(),
-          pixel.b.toInt(),
-        );
-      }
-    }
-
-    return result;
   }
 
   static int _getLevel(int quality) {
