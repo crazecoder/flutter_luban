@@ -1,5 +1,5 @@
-
 import 'package:cross_file/cross_file.dart';
+import 'package:image/image.dart';
 
 class CompressObject {
   final XFile imageXFile;
@@ -7,6 +7,9 @@ class CompressObject {
   ///compress to path
   ///web invalid
   final String? targetPath;
+
+  ///Compress the target width, adjust the height automatically
+  final int? targetWidth;
 
   ///If there is a cache, no compression will be performed
   ///web invalid
@@ -21,6 +24,7 @@ class CompressObject {
   CompressObject({
     required this.imageXFile,
     this.targetPath,
+    this.targetWidth,
     this.useCache = true,
     this.toRgb = true,
     this.numberOfColors = 128,

@@ -73,7 +73,9 @@ class Luban {
       _xFileStorage.delete(decodedImageFile);
     }
     final bytes = await _lubanCompressToBytes(object.imageXFile,
-        toRgb: object.toRgb, numberOfColors: object.numberOfColors);
+        targetWidth: object.targetWidth,
+        toRgb: object.toRgb,
+        numberOfColors: object.numberOfColors);
     if (bytes == null) return null;
     decodedImageFile = XFile.fromData(bytes);
     if (!kIsWeb) await decodedImageFile.saveTo(path);
@@ -81,7 +83,7 @@ class Luban {
   }
 
   static Future<Uint8List?> _lubanCompressToBytes(XFile imageXFile,
-      {bool toRgb = false, int numberOfColors = 128}) async {
+      {int? targetWidth, bool toRgb = false, int numberOfColors = 128}) async {
     final bool exists = await _xFileStorage.exists(imageXFile);
     if (!exists) {
       return null;
@@ -95,7 +97,8 @@ class Luban {
     if (format == ImageFormat.jpg) {
       image = ImageParser.convertToRgb(image);
     }
-    final target = _calculator.calculateTarget(image.width, image.height);
+    final target = _calculator.calculateTarget(image.width, image.height,
+        targetWidth: targetWidth);
     if (target.width > 0 && target.width < image.width) {
       image = copyResize(
         image,
@@ -105,6 +108,7 @@ class Luban {
     }
     final bytes = Compressor.compress(
       image,
+      fixedQuality: !target.isLongImage ? 60 : null,
       targetSizeKb: target.targetSizeKb,
       imageFormat: format,
       numberOfColors: numberOfColors,

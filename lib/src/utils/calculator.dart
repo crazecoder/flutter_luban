@@ -8,12 +8,12 @@ class CompressionTarget {
   final int? targetSizeKb;
 
   const CompressionTarget(
-      this.width,
-      this.height,
-      this.estimatedSizeKb, {
-        this.isLongImage = false,
-        this.targetSizeKb,
-      });
+    this.width,
+    this.height,
+    this.estimatedSizeKb, {
+    this.isLongImage = false,
+    this.targetSizeKb,
+  });
 
   @override
   String toString() {
@@ -31,7 +31,7 @@ class CompressionCalculator {
   final int trapPixels = 40960000;
   final int capPixels = 10240000;
 
-  CompressionTarget calculateTarget(int width, int height) {
+  CompressionTarget calculateTarget(int width, int height, {int? targetWidth}) {
     if (width <= 0 || height <= 0) {
       return const CompressionTarget(0, 0, 0);
     }
@@ -41,7 +41,7 @@ class CompressionCalculator {
     final ratio = shortSide.toDouble() / longSide;
     final pixelCount = width * height;
 
-    var targetShort = baseShort;
+    var targetShort = targetWidth == null ? baseShort : targetWidth;
     var targetLong = (targetShort / ratio).toInt();
 
     if (longSide >= wallLong && ratio > wallRatio) {
@@ -66,8 +66,7 @@ class CompressionCalculator {
     var currentPixels = targetShort * targetLong;
 
     if (currentPixels > capPixels) {
-      final scale =
-          (sqrt(capPixels / currentPixels) * 1000).floor() / 1000.0;
+      final scale = (sqrt(capPixels / currentPixels) * 1000).floor() / 1000.0;
 
       targetShort = (targetShort * scale).toInt();
       targetLong = (targetLong * scale).toInt();
