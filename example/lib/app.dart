@@ -3,11 +3,10 @@ import 'dart:typed_data';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter_luban/flutter_luban.dart';
 import '../util.dart';
 
-class IoApp extends StatelessWidget {
+class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -29,8 +28,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  XFile? primaryFile;
-  XFile? compressedFile;
+  final compressBeans = <CompressBean>[];
+
+  // XFile? primaryFile;
+  // XFile? compressedFile;
   var time_start = 0;
   var time = 0;
 
@@ -39,21 +40,18 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
       body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text("$time"),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  if (primaryFile != null) _buildImage(primaryFile!, "primary"),
-                  if (compressedFile != null)
-                    _buildImage(compressedFile!, "compressed"),
-                ],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text("total time: $time ms"),
+            Expanded(
+              child: ListView.builder(
+                itemBuilder: (_, index) => _item(index),
+                itemCount: compressBeans.length,
+                padding: EdgeInsets.only(top: 20),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: Column(
@@ -67,12 +65,25 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           FloatingActionButton(
             onPressed: () {
-              _pickImage(ImageSource.gallery);
+              _pickImageList();
             },
             child: Icon(Icons.photo),
           ),
         ],
       ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+
+  Widget _item(int index) {
+    final bean = compressBeans[index];
+    final primaryFile = bean.primaryFile;
+    final compressedFile = bean.compressedFile;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        if (primaryFile != null) _buildImage(primaryFile, "primary"),
+        if (compressedFile != null) _buildImage(compressedFile, "compressed"),
+      ],
     );
   }
 
@@ -122,57 +133,73 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _pickImage(ImageSource type) async {
+    compressBeans.clear();
     XFile? imageXFile = await ImagePicker().pickImage(source: type);
+    var bean = CompressBean(primaryFile: imageXFile);
 
     if (imageXFile == null) return;
 
     setState(() {
-      primaryFile = imageXFile;
+      compressBeans.add(bean);
       time_start = DateTime.now().millisecondsSinceEpoch;
     });
-    final tempDir = await getTemporaryDirectory();
+    // final tempDir = await getTemporaryDirectory();
     CompressObject compressObject = CompressObject(
       //image
       imageXFile: imageXFile,
       //compress to path
-      targetPath: tempDir.path,
-      useCache: true,
+      // targetPath: tempDir.path,
+      targetWidth: 1080,
+      useCache: false,
       toRgb: true,
       numberOfColors: 128,
     );
     Luban.compressImage(compressObject).then((xfile) {
       setState(() {
         if (xfile == null) return;
-        compressedFile = xfile;
+        bean.compressedFile = xfile;
         time = DateTime.now().millisecondsSinceEpoch - time_start;
       });
     });
   }
 
   _pickImageList() async {
+    compressBeans.clear();
     final imageXFileList = await ImagePicker().pickMultiImage();
 
     if (imageXFileList.isEmpty) return;
     time_start = DateTime.now().millisecondsSinceEpoch;
-    final tempDir = await getTemporaryDirectory();
+    // final tempDir = await getTemporaryDirectory();
     final objs = <CompressObject>[];
     imageXFileList.forEach((imageXFile) {
+      compressBeans.add(CompressBean(primaryFile: imageXFile));
       objs.add(
         CompressObject(
           //image
           imageXFile: imageXFile,
           // bytes: bytes,
           //compress to path
-          targetPath: tempDir.path,
+          // targetPath: tempDir.path,
           useCache: false,
           toRgb: true,
           numberOfColors: 128,
         ),
       );
     });
-    Luban.compressImageList(objs).then((paths) {
+    Luban.compressImageList(objs).then((xfiles) {
       time = DateTime.now().millisecondsSinceEpoch - time_start;
-      print("compress success: ${paths.length}, time: $time ");
+      print("compress success: ${xfiles.length}, time: $time ");
+      for (int i = 0; i < xfiles.length; i++) {
+        compressBeans[i].compressedFile = xfiles[i];
+      }
+      setState(() {});
     });
   }
+}
+
+class CompressBean {
+  XFile? primaryFile;
+  XFile? compressedFile;
+
+  CompressBean({this.compressedFile, this.primaryFile});
 }
