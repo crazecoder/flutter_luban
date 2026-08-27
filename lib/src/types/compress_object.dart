@@ -1,5 +1,4 @@
 import 'package:cross_file/cross_file.dart';
-import 'package:image/image.dart';
 
 class CompressObject {
   final XFile imageXFile;
