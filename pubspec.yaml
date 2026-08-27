@@ -1,7 +1,7 @@
 name: flutter_luban
 description: An image compress package like Luban for Dart, based on image. This library has no system platform constraints.
 repository: https://github.com/crazecoder/flutter_luban
-version: 2.1.0
+version: 2.1.1
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -16,3 +16,11 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:

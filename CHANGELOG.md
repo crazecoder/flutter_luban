@@ -1,3 +1,5 @@
+## 2.1.1
+* add targetWidth
 ## 2.1.0
 * Use cross_file for web adaptation
 * add targetPath default value

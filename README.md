@@ -1,7 +1,7 @@
 # flutter_luban
 [![pub package](https://img.shields.io/pub/v/flutter_luban.svg)](https://pub.dartlang.org/packages/flutter_luban)
 
-An image compress package like [Luban](https://github.com/Curzibn/Luban) for Dart, based on [image](https://github.com/brendan-duncan/image).This library has no system platform constraints.
+An image compress package like [Luban](https://github.com/Curzibn/Luban) for Dart, based on [image](https://github.com/brendan-duncan/image).
 
 If ```toRgb: true``` , it supports all readable image formats 
 
