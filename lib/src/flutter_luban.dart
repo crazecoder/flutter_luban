@@ -77,7 +77,7 @@ class Luban {
         toRgb: object.toRgb,
         numberOfColors: object.numberOfColors);
     if (bytes == null) return null;
-    decodedImageFile = XFile.fromData(bytes);
+    decodedImageFile = XFile.fromData(bytes, path: kIsWeb ? null : path);
     if (!kIsWeb) await decodedImageFile.saveTo(path);
     return decodedImageFile;
   }
