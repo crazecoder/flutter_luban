@@ -1,3 +1,6 @@
+## 2.1.2
+* fix xfile path empty
+* upgrade image: ^4.10.1
 ## 2.1.1
 * add targetWidth
 ## 2.1.0
